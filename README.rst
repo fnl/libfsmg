@@ -12,14 +12,14 @@ types may be used (arrays and any sequence that provides the Iterator
 protocol).
 
 See the
-`Java API <tree/master/doc/index.html>`_
+`Java API <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/index.html>`_
 for general information on using this library,
 including general notes on implementing an
-`exact matcher <tree/master/doc/es/fnl/fsm/ExactMatcher.html>`_
+`exact matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/ExactMatcher.html>`_
 and on implementing the
-`pattern matcher <tree/master/doc/es/fnl/fsm/Pattern.html>`_
+`pattern matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/Pattern.html>`_
 . For the exact matcher, have a look at the
-`test case source <blob/master/src/test/java/es/fnl/fsm/TestExactMathcer.java>`_
+`test case source <http://github.com/fnl/libfsmg/blob/master/src/test/java/es/fnl/fsm/TestExactMatcher.java>`_
 to understand how to implement it. For the pattern matching,
 refer to the ``txtfnnl`` project implementations of the
 `transition interface <http://github.com/fnl/txtfnnl/blob/master/txtfnnl-uima/src/main/java/txtfnnl/uima/pattern/TokenTransition.java>`_

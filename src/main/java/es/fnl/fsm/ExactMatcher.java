@@ -54,7 +54,7 @@ public class ExactMatcher<E> {
   }
   
   /** @return a clone of the pattern sequence */
-  public List<E> getPattern() {
+  public List<E> pattern() {
     return new ArrayList<E>(pattern);
   }
 

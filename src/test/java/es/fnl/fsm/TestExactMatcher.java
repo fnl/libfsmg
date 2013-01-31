@@ -26,8 +26,8 @@ public class TestExactMatcher {
   }
 
   @Test
-  public final void testGetPattern() {
-    assertEquals(Arrays.asList(new Character[] { 'a', 'b', 'c', 'b', 'a' }), matcher.getPattern());
+  public final void testPattern() {
+    assertEquals(Arrays.asList(new Character[] { 'a', 'b', 'c', 'b', 'a' }), matcher.pattern());
   }
 
   @Test

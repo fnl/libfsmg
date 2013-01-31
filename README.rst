@@ -29,6 +29,12 @@ refer to the ``txtfnnl`` Maven project of the
 `CFG pattern compiler <https://github.com/fnl/txtfnnl/blob/master/txtfnnl-uima/src/main/java/txtfnnl/uima/pattern/RegExParser.java>`_
 .
 
+Installation
+------------
+
+Clone from github (``git clone git://github.com/fnl/libfsmg.git``),
+and run ``mvn install`` in the newly created ``libfsmg`` directory.
+
 License, Author and Copyright Notice
 ------------------------------------
 

@@ -54,11 +54,6 @@ public final class Matcher<E> {
   /** A flag to indicate whether quantifiers should be greedily consumed or not. */
   public boolean greedy = false;
 
-  /** Check if there was a previously made match. */
-  private boolean noMatch() {
-    return (len == -1 || idx == -1);
-  }
-
   /**
    * Creates a new Matcher object.
    * 
@@ -256,17 +251,15 @@ public final class Matcher<E> {
 
   /** Resets this matcher with a new sequence, returning itself. */
   public Matcher<E> reset(List<E> input) {
-    seq = clone(input);
+    seq = new ArrayList<E>(input);
     idx = -1;
     len = 1;
     return this;
   }
 
-  private List<E> clone(List<E> input) {
-    List<E> duplicate = new ArrayList<E>(input.size());
-    for (E item : input)
-      duplicate.add(item);
-    return duplicate;
+  /** Check if there was a previously made match. */
+  private boolean noMatch() {
+    return (len == -1 || idx == -1);
   }
 
   /**

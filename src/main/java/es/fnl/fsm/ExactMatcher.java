@@ -1,7 +1,7 @@
 /* Created on Dec 20, 2012 by Florian Leitner. Copyright 2012. All rights reserved. */
 package es.fnl.fsm;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,71 +12,55 @@ import java.util.Map;
  * Knuth-Morris-Pratt algorithm to search for an exact, sequential pattern.
  * <p>
  * This is an exact matcher, so elements are compared using <code>equals(Object)</code>. Note that
- * the empty pattern never match, while a <code>null</code> in the pattern is allowed to match a
- * <code>null</code> in the sequence if in the right positions (because the DFA uses a HashMap).
+ * the empty pattern is illegal, while a <code>null</code> in the pattern is allowed to match a
+ * <code>null</code> in the sequence if at the right position.
  * 
  * @author Florian Leitner
  */
 public class ExactMatcher<E> {
-  final E[] pattern;
-  final Map<E, int[]> dfa;
+  final int end;
+  final List<E> pattern;
+  private final Map<E, int[]> dfa; // "alphabetized" transition "table"
 
   /**
-   * Create a matcher for a sequence of elements.
-   * <p>
-   * Automatically {@link #compile() compiles} the DFA transition table.
+   * Create a matcher for a pattern sequence.
    * 
    * @param pattern sequence that should lead to a match
    */
-  @SuppressWarnings("unchecked")
-  public ExactMatcher(List<E> pattern) {
-    this((E[]) pattern.toArray());
-  }
-
-  /**
-   * Create a matcher from a List of elements (warning: unchecked/unsafe).
-   * <p>
-   * Automatically {@link #compile() compiles} the DFA transition table.
-   * 
-   * @param p sequence that should lead to a match
-   * @param klass of the instances (<E>)
-   */
-  public ExactMatcher(E[] p) {
-    pattern = p;
-    dfa = new HashMap<E, int[]>();
-    compile();
-  }
-
-  /** @return a clone of the pattern sequence */
-  public List<E> getPattern() {
-    return Arrays.asList(pattern);
-  }
-
-  /** Compile the DFA transition table using the KMP construction algorithm. */
-  private void compile() {
+  public ExactMatcher(final List<E> pattern) {
+    this.end = pattern.size();
+    this.pattern = new ArrayList<E>(pattern);
+    this.dfa = new HashMap<E, int[]>();
+    if (end == 0) throw new IllegalArgumentException("empty patterns are illegal");
+    // compile the DFA transition table:
     int[] next;
     for (E transition : pattern)
-      dfa.put(transition, new int[pattern.length]);
-    if (pattern.length > 0) {
-      dfa.get(pattern[0])[0] = 1; // initial state match transition
-      for (int x = 0, i = 1; i < pattern.length; i++) {
-        for (int[] change : dfa.values())
-          change[i] = change[x]; // set state changes for mismatches
-        next = dfa.get(pattern[i]); // get the table for the current element
-        next[i] = i + 1; // store state change for match
-        x = next[x]; // update current base state x
-      }
+      dfa.put(transition, new int[end]);
+    dfa.get(pattern.get(0))[0] = 1; // initial state match transition
+    for (int base = 0, pointer = 1; pointer < end; pointer++) {
+      for (int[] change : dfa.values())
+        change[pointer] = change[base]; // set state changes for mismatches
+      next = dfa.get(pattern.get(pointer)); // get the table for the current element
+      next[pointer] = pointer + 1; // store state change for match
+      base = next[base]; // update current base state
     }
+  }
+
+  /** @return an updated pointer using the transition table */
+  protected int transition(final E element, final int pointer) {
+    // if the element is known, and given the current state (pointer), find the next (pointer)
+    if (dfa.containsKey(element)) return dfa.get(element)[pointer];
+    else return 0; // otherwise, return to the initial state (pointer)
+  }
+  
+  /** @return a clone of the pattern sequence */
+  public List<E> getPattern() {
+    return new ArrayList<E>(pattern);
   }
 
   /** @return length of the pattern (total number of elements). */
   public int length() {
-    return pattern.length;
-  }
-
-  /** @return size of the pattern (total number of elements). */
-  public int size() {
-    return length();
+    return end;
   }
 
   /** @return radix of the pattern (number of non-equal elements). */
@@ -89,7 +73,7 @@ public class ExactMatcher<E> {
    * 
    * @return the offset of the match or <code>-1</code> if no match is found
    */
-  public int find(List<E> sequence) {
+  public int find(final List<E> sequence) {
     return find(sequence, 0);
   }
 
@@ -98,34 +82,24 @@ public class ExactMatcher<E> {
    * 
    * @return the offset of the match or <code>-1</code> if no match is found
    */
-  public int find(List<E> sequence, int offset) {
-    int p = 0;
-    int n = sequence.size();
-    while (offset < n && p < pattern.length) {
-      E element = sequence.get(offset);
-      p = transition(element, p);
-      if (p == pattern.length) return offset - pattern.length + 1;
+  public int find(final List<E> sequence, int offset) {
+    int pointer = 0;
+    final int size = sequence.size();
+    while (offset < size) {
+      pointer = transition(sequence.get(offset), pointer);
+      if (pointer == end) return offset - end + 1;
       else offset++;
     }
     return -1;
   }
 
   /** Determine if the pattern matches anywhere in a sequence iterator. */
-  public boolean scan(Iterator<E> seqIt) {
-    int p = 0;
-    while (seqIt.hasNext() && p < pattern.length) {
-      E element = seqIt.next();
-      p = transition(element, p);
-      if (p == pattern.length) return true;
+  public boolean scan(final Iterator<E> seqIt) {
+    int pointer = 0;
+    while (seqIt.hasNext()) {
+      pointer = transition(seqIt.next(), pointer);
+      if (pointer == end) return true;
     }
     return false;
-  }
-
-  private int transition(E element, int p) {
-    try {
-      return dfa.get(element)[p];
-    } catch (NullPointerException e) {
-      return 0;
-    }
   }
 }

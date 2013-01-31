@@ -29,11 +29,11 @@ public class TestExactMatcher {
   }
 
   @Test
-  public final void testLengthAndSize() {
+  public final void testLengthAndRadix() {
     Character[] p = new Character[] { 'a', 'b', 'c', 'b', 'a' };
     ExactMatcher<Character> matcher = new ExactMatcher<Character>(p);
     assertEquals(5, matcher.length());
-    assertEquals(3, matcher.size());
+    assertEquals(3, matcher.radix());
   }
 
   private List<Character> newCharacterList(String s) {
@@ -64,9 +64,11 @@ public class TestExactMatcher {
 
   @Test
   public final void testNullsCanMatchNulls() {
-    Character[] p = new Character[] { null };
+    Character[] p = new Character[] { 'a', null, 'a' };
     List<Character> s = new ArrayList<Character>();
+    s.add('a');
     s.add(null);
+    s.add('a');
     ExactMatcher<Character> matcher = new ExactMatcher<Character>(p);
     assertEquals(0, matcher.find(s));
   }

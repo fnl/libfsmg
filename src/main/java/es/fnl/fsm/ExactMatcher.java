@@ -50,7 +50,7 @@ public class ExactMatcher<E> {
   protected int transition(final E element, final int pointer) {
     // if the element is known, and given the current state (pointer), find the next (pointer)
     if (dfa.containsKey(element)) return dfa.get(element)[pointer];
-    else return 0; // otherwise, return to the initial state (pointer)
+    else return 0; // otherwise, return the initial state (pointer)
   }
   
   /** @return a clone of the pattern sequence */

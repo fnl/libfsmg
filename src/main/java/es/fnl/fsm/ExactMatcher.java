@@ -1,83 +1,90 @@
 /* Created on Dec 20, 2012 by Florian Leitner. Copyright 2012. All rights reserved. */
 package es.fnl.fsm;
 
-import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
  * A generic DFA for doing exact pattern matching. The implementation is based on the classical
- * Knuth-Morris-Pratt algorithm, and therefore requires the use of an exact, sequential pattern.
+ * Knuth-Morris-Pratt algorithm to search for an exact, sequential pattern.
  * <p>
- * In addition to this class, the {@link Transition} interface has to be implemented to define how
- * elements on the sequence should be matched. This is an exact matcher, so it is not possible to
- * define optional or repeated transitions, and there is not branching ability at intermediate
- * states of the DFA.
+ * This is an exact matcher, so elements are compared using <code>equals(Object)</code>. Note that
+ * the empty pattern never match, while a <code>null</code> in the pattern is allowed to match a
+ * <code>null</code> in the sequence if in the right positions.
  * 
  * @author Florian Leitner
  */
-public class ExactMatcher<T extends Transition<E>, E> {
-  final T[] pattern;
-  final int[] next;
+public class ExactMatcher<E> {
+  final E[] pattern;
+  final List<E> alphabet;
+  final int[][] dfa;
+  final int radix;
+  final int length;
 
-  /**
-   * Create a matcher from an array of transitions.
-   * <p>
-   * Automatically {@link #compile() compiles} the transition table.
-   * 
-   * @param transitions pattern sequence that should lead to a match
-   */
-  public ExactMatcher(T[] transitions) {
-    this.pattern = transitions.clone();
-    this.next = new int[transitions.length];
-    compile();
+  /** The matching function; returns <code>true</code> if the element and transition are null. */
+  private static boolean matches(Object element, Object transition) {
+    return transition != null && transition.equals(element) || transition == null &&
+        element == null;
   }
 
   /**
-   * Create a matcher from a List of transitions (warning: unchecked/unsafe).
+   * Create a matcher for a sequence of elements.
    * <p>
-   * Automatically {@link #compile() compiles} the transition table.
+   * Automatically {@link #compile() compiles} the DFA transition table.
    * 
-   * @param pattern transitions that should lead to a match
-   * @param klass of the transition instances (T extends Transition<E>)
+   * @param pattern sequence that should lead to a match
    */
   @SuppressWarnings("unchecked")
-  public ExactMatcher(List<T> pattern, Class<T> klass) {
-    final int n = pattern.size();
-    this.pattern = (T[]) Array.newInstance(klass, n);
-    for (int i = 0; i < n; i++)
-      this.pattern[i] = pattern.get(i);
-    this.next = new int[n];
-    compile();
+  public ExactMatcher(List<E> pattern) {
+    this((E[]) pattern.toArray());
   }
 
   /**
-   * Return a clone of the array of transitions for this pattern.
+   * Create a matcher from a List of elements (warning: unchecked/unsafe).
+   * <p>
+   * Automatically {@link #compile() compiles} the DFA transition table.
    * 
-   * @return a clone of the underlying transitions (for inspection).
+   * @param pattern sequence that should lead to a match
+   * @param klass of the instances (<E>)
    */
-  public T[] getTransitions() {
-    return pattern.clone();
+  public ExactMatcher(E[] pattern) {
+    this.pattern = pattern;
+    length = pattern.length;
+    alphabet = new ArrayList<E>(new HashSet<E>(Arrays.asList(pattern)));
+    radix = alphabet.size();
+    dfa = new int[radix][length];
+    if (length > 0) compile();
+  }
+
+  /** @return a clone of the pattern sequence */
+  public List<E> getPattern() {
+    return Arrays.asList(pattern);
   }
 
   /** Compile DFA transition table using the classical KMP construction algorithm. */
   private void compile() {
-    int x = 0;
-    for (int i = 1; i < pattern.length; i++) {
-      if (pattern[x].equals(pattern[i])) {
-        next[i] = next[x];
-        x += 1;
-      } else {
-        next[i] = x + 1;
-        x = next[x];
-      }
+    dfa[alphabet.indexOf(pattern[0])][0] = 1; // initial state match transition
+    for (int x = 0, i = 1; i < length; i++) {
+      int r;
+      for (r = 0; r < radix; r++)
+        dfa[r][i] = dfa[r][x]; // set state changes given a mismatch
+      r = alphabet.indexOf(pattern[i]); // find the radix
+      dfa[r][i] = i + 1; // set the state change given a match
+      x = dfa[r][x]; // update current base state x
     }
   }
 
-  /** Return the length of the pattern (number of transitions). */
+  /** Return the length of the pattern (total number of elements). */
   public int length() {
-    return pattern.length;
+    return length;
+  }
+
+  /** Return the size (radix) of the pattern (number of different elements). */
+  public int size() {
+    return radix;
   }
 
   /**
@@ -85,90 +92,44 @@ public class ExactMatcher<T extends Transition<E>, E> {
    * <p>
    * Return <code>-1</code> if no match is found.
    */
-  public int find(E[] sequence) {
+  public int find(List<E> sequence) {
     return find(sequence, 0);
   }
 
   /**
-   * Find the index at which the pattern matches in a sequence at or after position
-   * <code>start</code> in the array.
+   * Find the index at which the pattern matches in a sequence at or after the offset in the array.
    * <p>
    * Return <code>-1</code> if no match is found.
    */
-  public int find(E[] sequence, int offset) {
-    final int n = sequence.length;
-    final int m = length();
-    int j = 0;
-    for (int i = offset; i < n; i++) {
-      if (pattern[j].matches(sequence[i])) j++;
-      else j = next[j];
-      if (j == m) return i - m + 1;
+  public int find(List<E> sequence, int offset) {
+    int p = 0;
+    int n = sequence.size();
+    for (; offset < n && p < length; offset++) {
+      E element = sequence.get(offset);
+      if (matches(element, pattern[p])) p++;
+      else if (p > 0) try {
+        p = dfa[alphabet.indexOf(element)][p];
+      } catch (IndexOutOfBoundsException e) {
+        p = 0;
+      }
+      if (p == length) return offset - length + 1;
     }
     return -1;
   }
 
-  /**
-   * Find the first element at which the pattern matches a sequence iterator.
-   * <p>
-   * Return <code>null</code> if no match was made.
-   */
-  public E find(Iterator<E> sequenceIt) {
-    List<E> sub = search(sequenceIt);
-    return (null == sub) ? null : sub.get(0);
-  }
-
-  /**
-   * Assert if the pattern matches anywhere in a sequence.
-   */
-  public boolean matches(E[] sequence) {
-    return find(sequence, 0) != -1;
-  }
-
-  /**
-   * Assert if the pattern matches anywhere in a sequence at or after position <code>start</code>
-   * in the array.
-   */
-  public boolean matches(E[] sequence, int offset) {
-    return find(sequence, offset) != -1;
-  }
-
-  /**
-   * Assert if the pattern matches anywhere in a sequence iterator.
-   */
-  public boolean matches(Iterator<E> sequenceIt) {
-    final int m = length();
-    int j = 0;
-    while (sequenceIt.hasNext()) {
-      if (pattern[j].matches(sequenceIt.next())) j++;
-      else j = next[j];
-      if (j == m) return true;
+  /** Determine if the pattern matches anywhere in a sequence iterator. */
+  public boolean scan(Iterator<E> seqIt) {
+    int p = 0;
+    while (seqIt.hasNext() && p < length) {
+      E element = seqIt.next();
+      if (matches(element, pattern[p])) p++;
+      else if (p > 0) try {
+        p = dfa[alphabet.indexOf(element)][p];
+      } catch (IndexOutOfBoundsException e) {
+        p = 0;
+      }
+      if (p == length) return true;
     }
     return false;
-  }
-
-  /**
-   * Extract the List of elements at which the pattern matches a sequence iterator.
-   * <p>
-   * Return <code>null</code> if no match was made.
-   */
-  public List<E> search(Iterator<E> sequence) {
-    final int m = length();
-    int j = 0;
-    List<E> l = null;
-    while (sequence.hasNext()) {
-      E element = sequence.next();
-      if (pattern[j].matches(element)) {
-        if (j == 0) l = new LinkedList<E>();
-        l.add(element);
-        j++;
-      } else {
-        j = next[j];
-      }
-      if (j == m) {
-        int i = l.size();
-        return i == m ? l : l.subList(i - m, i);
-      }
-    }
-    return null;
   }
 }

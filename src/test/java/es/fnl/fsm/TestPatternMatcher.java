@@ -438,4 +438,19 @@ public class TestPatternMatcher {
     Assert.assertEquals(TestPatternMatcher.toCharacterArray("y"), m.group(3));
     Assert.assertFalse(m.find());
   }
+  
+  @Test
+  public final void testGreedyMode() {
+    final Pattern<Character> p = Pattern.match(new CharTransition('a')).repeat();
+    final Matcher<Character> m = p.matcher(TestPatternMatcher.toCharacterArray("aab"));
+    Assert.assertTrue(m.find(0));
+    Assert.assertEquals(0, m.start());
+    Assert.assertEquals(1, m.end());
+    Assert.assertTrue(m.find());
+    m.greedy = true;
+    Assert.assertTrue(m.find(0));
+    Assert.assertEquals(0, m.start());
+    Assert.assertEquals(2, m.end());
+    Assert.assertFalse(m.find());
+  }
 }

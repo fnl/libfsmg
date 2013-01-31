@@ -36,6 +36,10 @@ import java.util.Stack;
  * A few convenience methods present in {@link java.util.regex.Matcher} are not implemented,
  * particularly <code>appendReplacement</code>, <code>appendTail</code>, and
  * <code>replaceAll</code>.
+ * <p>
+ * Greedy vs. non-greedy behavior can be modified by changing the {@link #greedy} flag.
+ * <p>
+ * This class is <b><i>not</i> thread-safe</b>.
  * 
  * @author Florian Leitner
  */
@@ -47,6 +51,8 @@ public final class Matcher<E> {
   private int idx; // offset of the previous match (-1 if no previous match attempt was made)
   private int[][] captureGroups; // capture group offsets (int[][2] arrays)
   private BFSQueue<E> queue;
+  /** A flag to indicate whether quantifiers should be greedily consumed or not. */
+  public boolean greedy = false;
 
   /** Check if there was a previously made match. */
   private boolean noMatch() {
@@ -272,23 +278,25 @@ public final class Matcher<E> {
   private int match() {
     if (idx > seq.size()) throw new IndexOutOfBoundsException("offset exceeds sequence length");
     captureGroups = new int[][] {}; // reset capture groups
-    // (capture groups will be built from the backtrace of the tracer queue)
+    // (capture groups will be built from the backtrace of the queue)
     if (entry.isFinal()) return 0; // a "match anything" pattern...
     E element; // the currently consumed item
     State<E> state = entry; // the currently processed state
     int offset = idx; // the current position of the state machine in the sequence
     queue = new BFSQueue<E>(offset, state); // start a new tracer queue
+    QueueItem<State<E>> match = null; // for greedy mode
+    int length = -1; // for greedy mode
     // search for an accept state on the queue while there are items in it
+    search:
     while (!queue.isEmpty()) {
       QueueItem<State<E>> item = queue.remove();
       offset = item.index();
       state = item.get();
       if (state.isFinal()) {
-        // backtrack captured groups and report the length of the shortest matching sequence
-        setCaptureGroups(item);
-        // ==== SUCCESS ====
-        return offset - idx;
-        // =================
+        // determine the length of this matching sequence
+        length = offset - idx;
+        match = item;
+        if (!greedy) break search; // only keep looking in greedy mode
       } else if (offset < seq.size()) {
         element = seq.get(offset); // get the item in the sequence at the relevant index
         for (Transition<E> t : state.transitions.keySet()) {
@@ -301,9 +309,9 @@ public final class Matcher<E> {
       if (state.epsilonTransitions.size() > 0)
         queue.addTransistions(offset, item, state.epsilonTransitions, 0.0);
     }
-    // FAILURE
-    return -1;
-    // =======
+    // backtrack captured groups
+    if (match != null) setCaptureGroups(match);
+    return length;
   }
 
   /**

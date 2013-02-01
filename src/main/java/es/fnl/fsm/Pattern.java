@@ -12,41 +12,42 @@ import java.util.Queue;
 import java.util.Set;
 
 /**
- * A generic, NFA-based pattern matching implementation using weighted backtracking and providing
- * capture groups.
+ * A <i>generic</i>, <b>NFA-based pattern matching</b> implementation using <i>weighted
+ * backtracking</i> to provide capture groups.
  * <p>
- * This class provides methods to compile a non-deterministic state machine. In addition to this
- * class, the {@link Transition} interface has to be implemented, defining how elements on the
- * sequence should be matched and which weight the resulting transition should have.
+ * This class provides methods to compile a non-deterministic state machine. In addition to a
+ * pattern parser/compiler, the {@link Transition} interface has to be implemented, defining how
+ * elements on the sequence should be matched and which weight the resulting transition should
+ * have.
  * <p>
  * The entire API for this generic NFA is designed as close as possible to Java's own
  * {@link java.util.regex.Pattern} API. It is incomplete, because while the class is usable, it
- * provides no static <code>compile(String regex)</code> method. Therefore, some method of
- * compiling the NFA needs to be implemented, such as a regular expression language based on a
- * context free grammar. For this reason, the {@link #toString()} method that would convert the
- * Pattern back to a String of the regular language only produces a directed, acyclic graph of the
- * state-transitions (i.e., cyclic dependencies are not represented).
+ * provides no static <code>compile(String regex)</code> method or any other predetermined
+ * mechanism of assembling the FSM. Therefore, some procedure of compiling the NFA needs to be
+ * implemented, such as a regular expression language based on a context free grammar. For this
+ * reason, the {@link #toString()} method that would convert the Pattern back to a String of the
+ * regular language only produces a directed, acyclic graph of the state-transitions (i.e., cyclic
+ * dependencies are not represented) that is useful to debug the state machine.
  * <p>
  * <b>Compiling a Pattern</b>
  * <p>
- * Users of this generic NFA package could, for example, inherit this class and implement a method
- * such as <code>public static Pattern<E> compile(String)</code> that compiles the NFA from some
- * regular expression language. The states should be compiled using the default constructor, and
- * the static methods {@link Pattern#match(Transition) match} (a single transition),
- * {@link Pattern#chain(Pattern, Pattern) chain} ("AND", "", i.e., chain a sequence of
- * transitions), and {@link Pattern#branch(Pattern, Pattern) branch} ("OR", "|", branch out into
- * several possible transitions). To declare a particular sub-pattern as a capture group, apply the
- * static {@link Pattern#capture(Pattern) capture} method on it. The core sequence element matching
- * should implement the {@link Transition} interface. A pattern's behavior can be augmented by
- * making it {@link #optional() optional} ("?") and/or by allowing it to be
- * {@link Pattern#repeat() repeated} ("+"; a pattern that is made both optional and repeated
- * effectively acts as a Kleene closure, "*"). Unless there are reasons not to, the last step of
- * compiling a pattern should be to call {@link Pattern#minimize()} on itself, thereby removing
- * states with epsilon transitions and no other semantic values (essentially, artifacts from the
- * compilation).
+ * Implementations of this generic NFA package could, for example, inherit this class and implement
+ * a method such as <code>static Pattern&lt;E&gt; compile(String)</code> that parses and compiles
+ * the NFA from some regular language. The states should be compiled using the default constructors
+ * or the static methods {@link Pattern#match(Transition) match} (a single transition), and then
+ * joined with {@link Pattern#chain(Pattern, Pattern) chain} ("AND", "", i.e., chain a sequence of
+ * transitions) or {@link Pattern#branch(Pattern, Pattern) branch} ("OR", "|", branch out into
+ * several possible transitions) operations. To declare a particular sub-pattern as a capture
+ * group, apply the static {@link Pattern#capture(Pattern) capture} method on it. Any (sub-)
+ * pattern's behavior can be augmented by making it {@link #optional() optional} ( <code>?</code> )
+ * and/or by allowing it to {@link Pattern#repeat() repeat} ( <code>+</code> ; a pattern that is
+ * made both optional and repeated effectively acts as a full Kleene closure ( <code>*</code> )).
+ * Unless there are reasons not to, the last step of compiling a pattern should be to call
+ * {@link Pattern#minimize()} on itself, thereby removing states with epsilon transitions and no
+ * other pattern semantics (essentially, removing artifacts created during the compilation).
  * <p>
- * A few convenience methods present in {@link java.util.regex.Pattern} are not implemented,
- * particularly the <code>split</code> method.
+ * A few convenience methods present in {@link java.util.regex.Pattern Java's Pattern API} are not
+ * implemented, particularly the <code>split</code> methods.
  * 
  * @author Florian Leitner
  */

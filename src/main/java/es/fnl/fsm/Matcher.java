@@ -12,7 +12,7 @@ import java.util.Stack;
 
 /**
  * An engine that performs match operation on a sequence of generic elements <code>E</code> by
- * interpreting a {@link Pattern} (analogous to {@link java.util.regex.Matcher}).
+ * interpreting a {@link Pattern} (analogous to Java's {@link java.util.regex.Matcher}).
  * <p>
  * A matcher is created from a pattern by invoking the pattern's {@link Pattern#matcher(List)
  * matcher} method. Once created, a matcher can be used to perform different kinds of match
@@ -33,13 +33,14 @@ import java.util.Stack;
  * capturing group in the pattern as well as a total count of such subsequences. As a convenience,
  * methods are also provided for returning these captured subsequences.
  * <p>
- * A few convenience methods present in {@link java.util.regex.Matcher} are not implemented,
+ * A few convenience methods present in Java's {@link java.util.regex.Matcher} are not implemented,
  * particularly <code>appendReplacement</code>, <code>appendTail</code>, and
  * <code>replaceAll</code>.
  * <p>
- * Greedy vs. non-greedy behavior can be modified by changing the {@link #greedy} flag.
+ * Greedy vs. non-greedy behavior of the quantifiers can be modified by changing the
+ * {@link #greedy} flag (default: non-greedy matching).
  * <p>
- * This class is <b><i>not</i> thread-safe</b>.
+ * This class is <i>not</i> <b>thread-safe</b>.
  * 
  * @author Florian Leitner
  */
@@ -51,7 +52,7 @@ public final class Matcher<E> {
   private int idx; // offset of the previous match (-1 if no previous match attempt was made)
   private int[][] captureGroups; // capture group offsets (int[][2] arrays)
   private BFSQueue<E> queue;
-  /** A flag to indicate whether quantifiers should be greedily consumed or not. */
+  /** A flag indicating whether quantifiers should behave greedily or not (the default). */
   public boolean greedy = false;
 
   /**
@@ -180,6 +181,26 @@ public final class Matcher<E> {
   /** Returns the number of <b>capturing</b> groups in this matcher's pattern. */
   public int groupCount() {
     return captureGroups.length;
+  }
+
+  /**
+   * Returns an array of group offsets (start, end), including the entire match group.
+   * <p>
+   * The first two integers are the entire match' offsets, each following pair are for each group.
+   * I.e., the length of the resulting array will always be even.
+   * 
+   * @return all group offset pairs (start, end)
+   * @throws IllegalStateException if no match has yet been attempted, or if the previous match
+   *         operation failed
+   */
+  public int[] groups() {
+    if (noMatch()) throw new IllegalStateException("no previous match");
+    int[] groups = new int[2 + captureGroups.length * 2];
+    for (int i = captureGroups.length; i >= 0; i--) {
+      groups[i * 2] = start(i);
+      groups[i * 2 + 1] = end(i);
+    }
+    return groups;
   }
 
   /**

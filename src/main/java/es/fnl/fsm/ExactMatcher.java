@@ -7,13 +7,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This matcher implements sequence comparison between <i>lists</i> using the <b>Boyer-Moore</b>
+ * This matcher implements sequence comparison between <i>Lists</i> using the <b>Boyer-Moore</b>
  * pattern matching algorithm.
+ * <p>
+ * As this is an exact matcher, elements are compared using <code>equals(Object)</code>. Note that
+ * the empty pattern is illegal, while a <code>null</code> in the pattern is allowed to match a
+ * <code>null</code> in the sequence if at the right position.
  * 
  * @author Florian Leitner
- * @see ExactMatcherBase
  */
-public final class ExactMatcher<E> extends ExactMatcherBase<E> {
+public final class ExactMatcher<E> extends MatcherBase<E> {
   /** The Boyer-Moore mismatch jump table. */
   private final Map<E, Integer> shifts;
   /** The Boyer-Moore suffix match jump table. */
@@ -59,7 +62,10 @@ public final class ExactMatcher<E> extends ExactMatcherBase<E> {
         pattern.get(index) == null);
   }
 
-  /** @return the length of a sub-pattern that ends at <code>index</code> and is also its suffix */
+  /**
+   * Returns the length of a sub-pattern that ends at <code>index</code> and also is the pattern's
+   * suffix.
+   */
   private int suffixLength(int index) {
     int slen = 0;
     for (int pointer = end - 1; index >= 0; --index, --pointer)

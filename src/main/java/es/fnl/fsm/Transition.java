@@ -3,19 +3,19 @@ package es.fnl.fsm;
 /**
  * Transitions define how elements of a sequence should match to the pattern.
  * <p>
- * E.g., if the {@link Pattern} (a non-deterministic automaton) or the {@link ExactMatcherBase} (a
- * deterministic automaton) should match a List of elements of some generic type <code>E</code>,
- * i.e., a <code>List&lt;E&gt;</code>, the transitions define if the current element in the
- * sequence is appropriate to allow the automaton to move on to its next state.
+ * E.g., if the {@link Pattern} (NFA) should match a List of elements of some generic type
+ * <code>E</code> (i.e., a <code>List&lt;E&gt;</code> ), transition instances determine if the
+ * current element in the sequence being aligned is appropriate to allow the automaton to move on
+ * (transition) to its next state.
  * <p>
  * In the case of a character sequence automaton (i.e., in String pattern matching such as provided
  * by Java's regex package), the {@link Transition#matches(Object)} implementation would return the
  * Boolean result of {@link Character#compareTo(Character)} <code>== 0</code> and be instantiated
  * by defining the relevant character for the transition. Furthermore, for the backtracking
- * mechanism provided by the {@link Pattern} FSA, a {@link #weight() weight} of each transition
- * should be defined, while epsilon transitions default to a weight of {@link Double#MIN_VALUE}.
- * The path chosen for backtracking then is the path that has the highest summed transition
- * weights and therefore defines the matched sequence and capture groups.
+ * mechanism provided by the {@link Pattern} NFA, a {@link #weight() weight} for each transition
+ * must be defined, while epsilon transitions should default to a weight of zero. The path chosen
+ * for backtracking then is the path that has the highest summed transition weights and therefore
+ * identifies the matched sequence and capture groups.
  * 
  * <pre>
  * class CharacterTransition implements Transition&lt;Character&gt; {
@@ -25,12 +25,12 @@ package es.fnl.fsm;
  *     this.c = toMatch;
  *   }
  * 
- *   public boolean match(Character other) {
+ *   public boolean matches(Character other) {
  *     return c.compareTo(other) == 0;
  *   }
  * 
  *   public double weight() {
- *     return 1.0; // each character is of equal "weight"
+ *     return 1.0; // each character is of equal &quot;weight&quot;
  *   }
  * }
  * </pre>

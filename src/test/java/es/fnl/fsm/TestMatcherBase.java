@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-public abstract class TestExactMatcherBase {
+public abstract class TestMatcherBase {
   String test;
   Character[] pattern = new Character[] { 'a', 'b', 'c', 'b', 'a' };
-  ExactMatcherBase<Character> base;
+  MatcherBase<Character> base;
 
   public void setUp() {
     test = "xabcaabcbaabax";

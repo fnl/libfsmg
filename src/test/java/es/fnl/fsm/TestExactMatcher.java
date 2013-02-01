@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestExactMatcher extends TestExactMatcherBase {
+public class TestExactMatcher extends TestMatcherBase {
   ExactMatcher<Character> matcher;
 
   @Override

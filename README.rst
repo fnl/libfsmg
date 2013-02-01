@@ -28,10 +28,12 @@ See the
 `Java API <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/index.html>`_
 index page of this library for general information,
 or the specific notes on using an
-`exact matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/ExactMatcherBase.html>`_
- (incl. links to the BM matcher and KMP scanner) and on implementing the
-`pattern matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/Pattern.html>`_
-. For the pattern matcher, refer to the ``txtfnnl``
+`ExactMatcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/ExactMatcher.html>`_
+(a BM List matcher), the
+`ExactScanner <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/ExactScanner.html>`_
+ (a KMP Iterator scanner) and on implementing the NFA
+`Pattern <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/Pattern.html>`_
+matcher. For the pattern matcher, refer to the ``txtfnnl``
 `project <http://github.com/fnl/txtfnnl>`_
 to find examples of the
 `Transition interface <http://github.com/fnl/txtfnnl/blob/master/txtfnnl-uima/src/main/java/txtfnnl/uima/pattern/TokenTransition.java>`_

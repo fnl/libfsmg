@@ -1,105 +1,109 @@
-/* Created on Dec 20, 2012 by Florian Leitner. Copyright 2012. All rights reserved. */
+/* Created on Feb 1, 2013 by Florian Leitner.
+ * Copyright 2013. All rights reserved. */
 package es.fnl.fsm;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * A generic DFA for doing exact pattern matching. The implementation is based on the classical
- * Knuth-Morris-Pratt algorithm to search for an exact, sequential pattern.
- * <p>
- * This is an exact matcher, so elements are compared using <code>equals(Object)</code>. Note that
- * the empty pattern is illegal, while a <code>null</code> in the pattern is allowed to match a
- * <code>null</code> in the sequence if at the right position.
+ * This matcher implements sequence comparison between <i>lists</i> using the <b>Boyer-Moore</b>
+ * pattern matching algorithm.
  * 
  * @author Florian Leitner
+ * @see ExactMatcherBase
  */
-public class ExactMatcher<E> {
-  final int end;
-  final List<E> pattern;
-  private final Map<E, int[]> dfa; // "alphabetized" transition "table"
+public final class ExactMatcher<E> extends ExactMatcherBase<E> {
+  /** The Boyer-Moore mismatch jump table. */
+  private final Map<E, Integer> shifts;
+  /** The Boyer-Moore suffix match jump table. */
+  private final int[] suffix;
 
   /**
-   * Create a matcher for a pattern sequence.
+   * Create a matcher for a pattern sequence, preprocessing the offset and suffix jump tables.
    * 
    * @param pattern sequence that should lead to a match
+   * @throws IllegalArgumentException if the pattern is empty
    */
   public ExactMatcher(final List<E> pattern) {
-    this.end = pattern.size();
-    this.pattern = new ArrayList<E>(pattern);
-    this.dfa = new HashMap<E, int[]>();
-    if (end == 0) throw new IllegalArgumentException("empty patterns are illegal");
-    // compile the DFA transition table:
-    int[] next;
-    for (E transition : pattern)
-      dfa.put(transition, new int[end]);
-    dfa.get(pattern.get(0))[0] = 1; // initial state match transition
-    for (int base = 0, pointer = 1; pointer < end; pointer++) {
-      for (int[] change : dfa.values())
-        change[pointer] = change[base]; // set state changes for mismatches
-      next = dfa.get(pattern.get(pointer)); // get the table for the current element
-      next[pointer] = pointer + 1; // store state change for match
-      base = next[base]; // update current base state
+    super(pattern);
+    shifts = new HashMap<E, Integer>();
+    suffix = new int[end];
+    int prefixPos = end;
+    int i;
+    // populate and compute the mismatch jump table:
+    for (i = 0; i < end - 1; i++)
+      shifts.put(this.pattern.get(i), end - 1 - i);
+    // populate the suffix match jump table:
+    for (i = end - 1; i >= 0; i--) {
+      if (isPrefix(i + 1)) prefixPos = i + 1;
+      suffix[end - 1 - i] = prefixPos - i + end - 1;
+    }
+    // compute the suffix match jumps:
+    for (i = 0; i < end - 1; i++) {
+      int slen = suffixLength(i);
+      suffix[slen] = end - 1 - i + slen;
     }
   }
 
-  /** @return an updated pointer using the transition table */
-  protected int transition(final E element, final int pointer) {
-    // if the element is known, and given the current state (pointer), find the next (pointer)
-    if (dfa.containsKey(element)) return dfa.get(element)[pointer];
-    else return 0; // otherwise, return the initial state (pointer)
-  }
-  
-  /** @return a clone of the pattern sequence */
-  public List<E> pattern() {
-    return new ArrayList<E>(pattern);
+  /** Check if the elements after <code>index</code> are also a prefix of the pattern. */
+  private boolean isPrefix(int index) {
+    for (int pointer = 0; index < end; ++index, ++pointer)
+      if (!match(pattern.get(index), pointer)) return false;
+    return true;
   }
 
-  /** @return length of the pattern (total number of elements). */
-  public int length() {
-    return end;
+  /** Check if the item at <code>index</code> in the pattern equals <code>element</code>. */
+  private boolean match(final E element, final int index) {
+    return (element != null && element.equals(pattern.get(index)) || element == null &&
+        pattern.get(index) == null);
   }
 
-  /** @return radix of the pattern (number of non-equal elements). */
-  public int radix() {
-    return dfa.size();
+  /** @return the length of a sub-pattern that ends at <code>index</code> and is also its suffix */
+  private int suffixLength(int index) {
+    int slen = 0;
+    for (int pointer = end - 1; index >= 0; --index, --pointer)
+      if (match(pattern.get(index), pointer)) slen++;
+      else break;
+    return slen;
   }
 
   /**
-   * Find the index at which the pattern matches in the sequence.
+   * Find the index at which the pattern matches in the <code>sequence</code>.
    * 
+   * @param sequence list to align the pattern with
    * @return the offset of the match or <code>-1</code> if no match is found
+   * @see ExactMatcher#find(List, int)
    */
   public int find(final List<E> sequence) {
     return find(sequence, 0);
   }
 
   /**
-   * Find the index at which the pattern matches in the sequence at or after the offset.
+   * Find the index at which the pattern matches in the <code>sequence</code> at or after the
+   * <code>offset</code>.
+   * <p>
+   * Find uses the <b>Booyer-Moore</b> algorithm; Therefore, the approach will use index access (
+   * <code>get(int)</code> ) on the List, so it is recommended not to use linked lists as input.
    * 
+   * @param sequence list to align the pattern with
+   * @param offset index in sequence where to start the alignments
    * @return the offset of the match or <code>-1</code> if no match is found
    */
   public int find(final List<E> sequence, int offset) {
-    int pointer = 0;
     final int size = sequence.size();
-    while (offset < size) {
-      pointer = transition(sequence.get(offset), pointer);
-      if (pointer == end) return offset - end + 1;
-      else offset++;
+    int pointer;
+    for (offset += end - 1; offset < size;) {
+      for (pointer = end - 1; match(sequence.get(offset), pointer); --offset, --pointer)
+        if (pointer == 0) return offset;
+      E e = sequence.get(offset);
+      offset += Math.max(suffix[end - 1 - pointer], (shifts.containsKey(e)) ? shifts.get(e) : end);
     }
     return -1;
   }
 
-  /** Determine if the pattern matches anywhere in a sequence iterator. */
-  public boolean scan(final Iterator<E> seqIt) {
-    int pointer = 0;
-    while (seqIt.hasNext()) {
-      pointer = transition(seqIt.next(), pointer);
-      if (pointer == end) return true;
-    }
-    return false;
+  @Override
+  public int radix() {
+    return shifts.size();
   }
 }

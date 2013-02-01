@@ -9,38 +9,20 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestExactMatcher {
+public class TestExactMatcher extends TestExactMatcherBase {
   ExactMatcher<Character> matcher;
-  String test;
 
+  @Override
   @Before
   public void setUp() {
-    Character[] p = new Character[] { 'a', 'b', 'c', 'b', 'a' };
-    matcher = new ExactMatcher<Character>(Arrays.asList(p));
-    test = "xabcaabcbaabax";
+    super.setUp();
+    matcher = new ExactMatcher<Character>(Arrays.asList(pattern));
+    base = matcher;
   }
 
   @Test(expected = IllegalArgumentException.class)
   public final void testMatcherSetupEmptyList() {
     new ExactMatcher<Object>(new ArrayList<Object>());
-  }
-
-  @Test
-  public final void testPattern() {
-    assertEquals(Arrays.asList(new Character[] { 'a', 'b', 'c', 'b', 'a' }), matcher.pattern());
-  }
-
-  @Test
-  public final void testLengthAndRadix() {
-    assertEquals(5, matcher.length());
-    assertEquals(3, matcher.radix());
-  }
-
-  private List<Character> newCharacterList(String s) {
-    List<Character> result = new ArrayList<Character>(s.length());
-    for (char c : s.toCharArray())
-      result.add(c);
-    return result;
   }
 
   @Test
@@ -52,13 +34,13 @@ public class TestExactMatcher {
   }
 
   @Test
-  public final void testDoesNotMatchEmptyLists() {
+  public final void testFindDoesNotMatchEmptyLists() {
     List<Character> s = newCharacterList("");
     assertEquals(-1, matcher.find(s));
   }
 
   @Test
-  public final void testNullsCanMatchNulls() {
+  public final void testFindNullsCanMatchNulls() {
     Character[] p = new Character[] { 'a', null, 'a' };
     List<Character> s = new ArrayList<Character>();
     s.add('a');
@@ -81,13 +63,5 @@ public class TestExactMatcher {
     assertEquals(test.indexOf("abcba"), matcher.find(s, 4));
     s.set(s.size() / 2, 'x');
     assertEquals(-1, matcher.find(s, 4));
-  }
-
-  @Test
-  public final void testScan() {
-    List<Character> s = newCharacterList(test);
-    assertTrue(matcher.scan(s.iterator()));
-    s.set(s.size() / 2, 'x');
-    assertFalse(matcher.scan(s.iterator()));
   }
 }

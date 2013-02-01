@@ -3,7 +3,7 @@ package es.fnl.fsm;
 /**
  * Transitions define how elements of a sequence should match to the pattern.
  * <p>
- * E.g., if the {@link Pattern} (a non-deterministic automaton) or the {@link ExactMatcher} (a
+ * E.g., if the {@link Pattern} (a non-deterministic automaton) or the {@link ExactMatcherBase} (a
  * deterministic automaton) should match a List of elements of some generic type <code>E</code>,
  * i.e., a <code>List&lt;E&gt;</code>, the transitions define if the current element in the
  * sequence is appropriate to allow the automaton to move on to its next state.

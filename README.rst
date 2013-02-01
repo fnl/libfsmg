@@ -1,7 +1,14 @@
+=======
 libfsmg
 =======
 
+Synopsis
+--------
+
 A generic finite state machine library.
+
+Overview
+--------
 
 This library provides two means of pattern matching: Knuth-Morris-Pratt (KMP;
 for the Iterator interface) and Boyer-Moore (BM; for the List interface)
@@ -14,15 +21,18 @@ types may be used (arrays, Lists and any sequence that provides the Iterator
 protocol). The APIs are implemented as close as possible to Java's own Pattern
 and Matcher APIs in ``util.regex``.
 
+Usage
+-----
+
 See the
 `Java API <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/index.html>`_
 index page of this library for general information,
-some general notes (incl. links to the BM matcher and KMP scanner) on using an
+or the specific notes on using an
 `exact matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/ExactMatcherBase.html>`_
-and on implementing the
+ (incl. links to the BM matcher and KMP scanner) and on implementing the
 `pattern matcher <http://htmlpreview.github.com?http://github.com/fnl/libfsmg/blob/master/doc/es/fnl/fsm/Pattern.html>`_
 . For the pattern matcher, refer to the ``txtfnnl``
-`project <http://github.com/fnl/libfsmg>`_
+`project <http://github.com/fnl/txtfnnl>`_
 to find examples of the
 `Transition interface <http://github.com/fnl/txtfnnl/blob/master/txtfnnl-uima/src/main/java/txtfnnl/uima/pattern/TokenTransition.java>`_
 , the
